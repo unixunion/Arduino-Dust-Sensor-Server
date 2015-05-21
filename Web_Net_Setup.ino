@@ -157,9 +157,9 @@ void set_EEPROM_Default() {
     eeprom_config.dustLedPin=8;
     eeprom_config.dustMultiplier=0.17;
     
-    eeprom_config.forwardIp[0]=144;
-    eeprom_config.forwardIp[1]=76;
-    eeprom_config.forwardIp[2]=1;
+    eeprom_config.forwardIp[0]=10;
+    eeprom_config.forwardIp[1]=0;
+    eeprom_config.forwardIp[2]=0;
     eeprom_config.forwardIp[3]=243;
     
     eeprom_config.forwardPort=8082;
