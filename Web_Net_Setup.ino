@@ -1,18 +1,5 @@
-/* Web_Net_Setup.pde - example for a webinterface to set the network configuration 
-Author:     Matthias Maderer
-Date:       07.03.2013
-Version:    1.0.1
-web:        www.edvler-blog.de/arduino_networksetup_webinterface_with_eeprom
-
-This is a sample Sketch for Webduino!
-More informations about Webduino can be found at https://github.com/sirleech/Webduino
-
-For more informations about EEPROMAnything.h look at http://playground.arduino.cc/Code/EEPROMWriteAnything
-*/
-
 /*
-* With this example its possible to configure the network configuration of the
-* Arduino Ethernet Shield with a webinterface. Imagine like your router setup.
+* This is the arduino dust sensor sketch which is powered by webduino
 * 
 * It's possible to configure the following network settings:
 * - MAC address
@@ -44,11 +31,11 @@ For more informations about EEPROMAnything.h look at http://playground.arduino.c
 * 
 * To setup your arduino upload this sketch.
 * 
-* If you don't change the sourcecode the default IP address is http://192.168.0.111/
+* If you don't change the sourcecode the default IP address is http://10.0.0.99
 * Don't forget to change the IP of your network adapter to a suitable address (e.g. to IP 192.168.0.1, NETMASK 255.255.255.0)!
 *
 * Enter the following URL for the setup page:
-* http://192.168.0.111/setupNet.html
+* http://10.0.0.99/setupNet.html
 *
 * Please note that no input checks are done!!
 * This means that no error would be thrown if you type a wrong IP address or other failures.
@@ -72,7 +59,6 @@ For more informations about EEPROMAnything.h look at http://playground.arduino.c
 #include "SPI.h" // new include
 #include "avr/pgmspace.h" // new include
 #include "Ethernet.h"
-//#include "EthernetUdp.h"
 #include "WebServer.h"
 
 
@@ -1022,16 +1008,10 @@ void loop()
   /* process incoming connections one at a time forever */
   webserver->processConnection(buff, &len);
   
+  
+  // every 60 seconds, send send TCP data to the forward address!
   if ( millis() % 60000 == 0 ) {
     
-    
-//    byte forward_ip[4];
-//    for (int a=0;a<4;a++) {
-//      forward_ip[a] = eeprom_config.forwardIp[a];
-//      if (a<3) {
-//        forward_ip[a+1] = B00101110;
-//      }
-//    }
     
     IPAddress forward_ip(eeprom_config.forwardIp[0], eeprom_config.forwardIp[1], eeprom_config.forwardIp[2], eeprom_config.forwardIp[3]); 
 
@@ -1052,17 +1032,6 @@ void loop()
       }
     }
     
-//    client.stop();
-    
-    
-//    byte packetBuffer[3];
-//    packetBuffer[0] = 1;
-//    packetBuffer[1] = 2;
-//    packetBuffer[2] = 3;
-    
-//    Udp.beginPacket(forward_ip, eeprom_config.forwardPort);
-//    Udp.write(d);
-//    Udp.endPacket();
   }
   
   
