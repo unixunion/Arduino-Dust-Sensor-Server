@@ -72,7 +72,7 @@ For more informations about EEPROMAnything.h look at http://playground.arduino.c
 #include "SPI.h" // new include
 #include "avr/pgmspace.h" // new include
 #include "Ethernet.h"
-#include "EthernetUdp.h"
+//#include "EthernetUdp.h"
 #include "WebServer.h"
 
 
@@ -157,12 +157,12 @@ void set_EEPROM_Default() {
     eeprom_config.dustLedPin=8;
     eeprom_config.dustMultiplier=0.17;
     
-    eeprom_config.forwardIp[0]=1;
-    eeprom_config.forwardIp[1]=2;
-    eeprom_config.forwardIp[2]=3;
-    eeprom_config.forwardIp[3]=4;
+    eeprom_config.forwardIp[0]=144;
+    eeprom_config.forwardIp[1]=76;
+    eeprom_config.forwardIp[2]=1;
+    eeprom_config.forwardIp[3]=243;
     
-    eeprom_config.forwardPort=8080;
+    eeprom_config.forwardPort=8082;
     
     #ifdef DEBUG
       Serial.println("Config reset");
@@ -298,7 +298,8 @@ void print_EEPROM_Settings() {
 */
 unsigned long last_dhcp_renew;
 byte dhcp_state;
-EthernetUDP Udp; // the udp client
+//EthernetUDP Udp; // the udp client
+EthernetClient client;
 
 /**
 * renewDHCP() function
@@ -802,7 +803,7 @@ void setupNetHTML(WebServer &server, WebServer::ConnectionType type, char *url_t
   server.print(27);
   server.printP(Form_input_value);
   server.print(eeprom_config.dustMultiplier);
-  server.printP(Form_input_size5);
+//  server.printP(Form_input_size5);
   server.printP(Form_input_end);
   server.printP(table_td_end);
   server.printP(table_tr_end);
@@ -835,7 +836,7 @@ void setupNetHTML(WebServer &server, WebServer::ConnectionType type, char *url_t
   server.print(32);
   server.printP(Form_input_value);
   server.print(eeprom_config.forwardPort);
-  server.printP(Form_input_size5);
+//  server.printP(Form_input_size5);
   server.printP(Form_input_end);
   server.printP(table_td_end);
   server.printP(table_tr_end);
@@ -929,7 +930,7 @@ void setup()
   delay(200); // some time to settle
   setupNetwork();
   delay(200); // some time to settle
-  Udp.begin(8888);
+//  Udp.begin(8888);
   
   setupDustSensor();
   
@@ -956,6 +957,9 @@ void setup()
 
   /* start the webserver */
   webserver->begin();
+  
+  // warmup the sensor
+  measureDust();
 }
 
 
@@ -1018,11 +1022,47 @@ void loop()
   /* process incoming connections one at a time forever */
   webserver->processConnection(buff, &len);
   
-  if ( millis() % 10000 == 0 ) {
+  if ( millis() % 60000 == 0 ) {
+    
+    
+//    byte forward_ip[4];
+//    for (int a=0;a<4;a++) {
+//      forward_ip[a] = eeprom_config.forwardIp[a];
+//      if (a<3) {
+//        forward_ip[a+1] = B00101110;
+//      }
+//    }
+    
+    IPAddress forward_ip(eeprom_config.forwardIp[0], eeprom_config.forwardIp[1], eeprom_config.forwardIp[2], eeprom_config.forwardIp[3]); 
+
     int d = measureDust();
-    Udp.beginPacket((eeprom_config.forwardIp[0],eeprom_config.forwardIp[1],eeprom_config.forwardIp[2],eeprom_config.forwardIp[3]), eeprom_config.forwardPort);
-    Udp.write(d);
-    Udp.endPacket();
+    
+    if (client.connected()) {
+      client.println(d);
+    } else {
+      client.stop();
+      delay(50);
+      if (client.connect(forward_ip, eeprom_config.forwardPort)) {
+        client.println(d);
+      } else {
+        client.stop();
+        #ifdef DEBUG
+          Serial.println("error connecting to server");
+        #endif
+      }
+    }
+    
+//    client.stop();
+    
+    
+//    byte packetBuffer[3];
+//    packetBuffer[0] = 1;
+//    packetBuffer[1] = 2;
+//    packetBuffer[2] = 3;
+    
+//    Udp.beginPacket(forward_ip, eeprom_config.forwardPort);
+//    Udp.write(d);
+//    Udp.endPacket();
   }
   
   
